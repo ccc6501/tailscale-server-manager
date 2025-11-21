@@ -1,0 +1,24 @@
+[
+  {
+    "name": "FastAPI Backend",
+    "kind": "backend",
+    "start_cmd": "uvicorn main:app --host 0.0.0.0 --port 8000",
+    "working_dir": null,
+    "match_keywords": ["uvicorn", "main:app"],
+    "ports": [8000],
+    "api_url": "http://localhost:8000",
+    "tailscale_url": null,
+    "description": "Main backend API service"
+  },
+  {
+    "name": "Web Frontend",
+    "kind": "frontend",
+    "start_cmd": "npm start",
+    "working_dir": null,
+    "match_keywords": ["node", "react-scripts"],
+    "ports": [3000],
+    "api_url": null,
+    "tailscale_url": "https://frontend.yourtailnet.ts.net",
+    "description": "React web application"
+  }
+]

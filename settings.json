@@ -1,0 +1,14 @@
+{
+  "storage_paths": {
+    "logs": "./logs",
+    "data": "./data",
+    "backups": "./backups"
+  },
+  "scheduled_tasks": [],
+  "stats_retention_days": 30,
+  "auto_restart_on_failure": true,
+  "check_port_conflicts": true,
+  "default_tailscale_domain": "100.88.23.90",
+  "update_interval_seconds": 5,
+  "api_base_url": "http://localhost:8765"
+}
