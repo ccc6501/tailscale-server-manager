@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,6 +29,120 @@
             --error: #ef4444;
             --warning: #f59e0b;
             --border: #1f2937;
+        }
+
+        /* Added classes (extracted from previous inline styles) */
+        .tabs-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .server-section {
+            margin-bottom: 24px;
+        }
+
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 16px;
+        }
+
+        .servers-empty {
+            display: none;
+            font-size: 14px;
+            color: var(--text-tertiary);
+            padding: 12px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+        }
+
+        .tasks-section,
+        .metrics-section,
+        .settings-tab-section {
+            display: none;
+        }
+
+        .tasks-section h2,
+        .metrics-section h2,
+        .settings-tab-section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: var(--accent-primary);
+        }
+
+        .metrics-summary {
+            margin-bottom: 16px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .metrics-servers-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .settings-intro,
+        .tasks-intro {
+            color: var(--text-tertiary);
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .tasks-intro {
+            margin-bottom: 16px;
+        }
+
+        .tasks-container {
+            display: grid;
+            gap: 12px;
+        }
+
+        /* Tasks form styling */
+        .tasks-form-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .tasks-form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .tasks-form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .label-tight {
+            margin-bottom: 4px !important;
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .tasks-checkbox-row {
+            margin-bottom: 12px;
+        }
+
+        .flex-end-actions.no-top {
+            margin-top: 0;
+        }
+
+        .flex-end-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
         }
 
         body {
@@ -118,8 +233,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         /* System Stats Bar */
@@ -436,11 +558,26 @@
             width: 100%;
             height: 100%;
             background: var(--bg-modal);
+            -webkit-backdrop-filter: blur(8px);
             backdrop-filter: blur(8px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 24px;
+        }
+
+        .servers-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hint {
+            color: var(--text-tertiary);
+            font-size: 12px;
         }
 
         .modal.active {
@@ -581,15 +718,24 @@
                 transform: translateX(400px);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
             }
         }
 
-        .toast.success { border-left: 3px solid var(--success); }
-        .toast.error { border-left: 3px solid var(--error); }
-        .toast.warning { border-left: 3px solid var(--warning); }
+        .toast.success {
+            border-left: 3px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 3px solid var(--error);
+        }
+
+        .toast.warning {
+            border-left: 3px solid var(--warning);
+        }
 
         .toast-icon {
             font-size: 20px;
@@ -612,7 +758,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Responsive */
@@ -620,22 +768,27 @@
             .services-grid {
                 grid-template-columns: 1fr;
             }
+
             .header-top {
                 flex-direction: column;
                 gap: 16px;
             }
+
             .bulk-actions {
                 flex-direction: column;
             }
+
             .form-row {
                 grid-template-columns: 1fr;
             }
+
             .system-stats {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -657,9 +810,7 @@
                         <span id="refresh-icon">🔄</span>
                         Refresh
                     </button>
-                    <button class="btn btn-secondary" onclick="openSettings()">
-                        ⚙️ Settings
-                    </button>
+                    <button class="btn btn-secondary" onclick="switchTab('settings')">⚙️ Settings</button>
                     <button class="btn btn-primary" onclick="openAddService()">
                         ➕ Add Service
                     </button>
@@ -667,31 +818,110 @@
             </div>
         </div>
 
-        <!-- System Stats -->
-        <div class="system-stats" id="system-stats">
-            <!-- Dynamically populated -->
+        <!-- Navigation Tabs -->
+        <div class="tabs-bar">
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('dashboard')" id="tab-btn-dashboard">📊
+                Dashboard</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('tasks')" id="tab-btn-tasks">🗓️ Tasks</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('metrics')" id="tab-btn-metrics">📈
+                Metrics</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('settings')" id="tab-btn-settings">⚙️
+                Settings</button>
         </div>
 
-        <!-- Bulk Actions -->
-        <div class="bulk-actions">
-            <h2>Bulk Actions</h2>
-            <button class="btn btn-danger btn-sm" onclick="stopAllBackends()">
-                Stop All Backends
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="stopAllFrontends()">
-                Stop All Frontends
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="stopAllOther()">
-                Stop All Other
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="checkPortConflicts()">
-                🔍 Check Port Conflicts
-            </button>
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-section">
+            <!-- Servers Section -->
+            <div id="servers-section" class="server-section">
+                <h2 class="servers-title">🖥️ Enrolled Servers</h2>
+                <div id="servers-container" class="servers-grid"></div>
+                <div id="no-servers" class="servers-empty">No servers enrolled yet. Use the enrollment API or agent
+                    script to register remote nodes.</div>
+            </div>
+
+            <!-- System Stats -->
+            <div class="system-stats" id="system-stats">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="bulk-actions">
+                <h2>Bulk Actions</h2>
+                <button class="btn btn-danger btn-sm" onclick="stopAllBackends()">
+                    Stop All Backends
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="stopAllFrontends()">
+                    Stop All Frontends
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="stopAllOther()">
+                    Stop All Other
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="checkPortConflicts()">
+                    🔍 Check Port Conflicts
+                </button>
+            </div>
+
+            <!-- Services Grid -->
+            <div class="services-grid" id="services-container">
+                <!-- Services will be dynamically loaded here -->
+            </div>
+        </div> <!-- end dashboard tab -->
+
+        <!-- Tasks Tab -->
+        <div id="tab-tasks" class="tab-section tasks-section">
+            <h2>🗓️ Scheduled Tasks</h2>
+            <p class="tasks-intro">Define cron-like scheduled actions on your services. Use standard 5-field cron syntax
+                (m h dom mon dow).</p>
+            <div class="tasks-form-container">
+                <div class="tasks-form-row">
+                    <div class="form-group">
+                        <label class="label-tight">Task Name *</label>
+                        <input type="text" id="task-name" placeholder="nightly-backup">
+                    </div>
+                    <div class="form-group">
+                        <label class="label-tight">Cron Expression *</label>
+                        <input type="text" id="task-cron" placeholder="0 2 * * *">
+                        <small class="hint">Runs at 02:00 every day (example)</small>
+                    </div>
+                </div>
+                <div class="tasks-form-row">
+                    <div class="form-group">
+                        <label class="label-tight">Action *</label>
+                        <select id="task-action">
+                            <option value="start">Start</option>
+                            <option value="stop">Stop</option>
+                            <option value="restart">Restart</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label-tight">Service Name *</label>
+                        <select id="task-service"></select>
+                    </div>
+                </div>
+                <div class="checkbox-group tasks-checkbox-row">
+                    <input type="checkbox" id="task-enabled" checked>
+                    <label for="task-enabled">Enabled</label>
+                </div>
+                <div class="flex-end-actions no-top">
+                    <button class="btn btn-secondary btn-sm" onclick="resetTaskForm()">Clear</button>
+                    <button class="btn btn-primary btn-sm" onclick="createTask()">Create Task</button>
+                </div>
+            </div>
+            <div id="tasks-container" class="tasks-container"></div>
         </div>
 
-        <!-- Services Grid -->
-        <div class="services-grid" id="services-container">
-            <!-- Services will be dynamically loaded here -->
+        <!-- Metrics Tab -->
+        <div id="tab-metrics" class="tab-section metrics-section">
+            <h2>📈 Multi-Server Metrics</h2>
+            <div id="metrics-summary" class="metrics-summary"></div>
+            <div id="metrics-servers-list" class="metrics-servers-list"></div>
+        </div>
+
+        <!-- Settings Tab (wrap existing modal trigger for direct access) -->
+        <div id="tab-settings" class="tab-section settings-tab-section">
+            <h2>⚙️ Settings</h2>
+            <p class="settings-intro">Use the button below to open the full settings modal.</p>
+            <button class="btn btn-secondary" onclick="openSettings()">Open Settings Modal</button>
         </div>
     </div>
 
@@ -759,7 +989,7 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                <div class="flex-end-actions">
                     <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
                     <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
                 </div>
@@ -808,7 +1038,7 @@
                 <div class="form-group">
                     <label>Match Keywords (comma-separated) *</label>
                     <input type="text" id="new-service-keywords" placeholder="python, server.py">
-                    <small style="color: var(--text-tertiary); font-size: 12px;">Used to identify the process in the system</small>
+                    <small class="hint">Used to identify the process in the system</small>
                 </div>
 
                 <div class="form-row">
@@ -827,7 +1057,7 @@
                     <textarea id="new-service-description" placeholder="What does this service do?"></textarea>
                 </div>
 
-                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                <div class="flex-end-actions">
                     <button class="btn btn-secondary" onclick="closeAddService()">Cancel</button>
                     <button class="btn btn-primary" onclick="addService()">Add Service</button>
                 </div>
@@ -842,12 +1072,39 @@
         let ws = null;
         let reconnectInterval = null;
         let currentSettings = null;
+        let serversPollInterval = null;
+        const TAB_IDS = ['dashboard', 'tasks', 'metrics', 'settings'];
+
+        function switchTab(tab) {
+            TAB_IDS.forEach(id => {
+                const section = document.getElementById(`tab-${id}`);
+                if (section) section.style.display = id === tab ? 'block' : 'none';
+                const btn = document.getElementById(`tab-btn-${id}`);
+                if (btn) {
+                    if (id === tab) {
+                        btn.style.background = 'var(--accent-gradient)';
+                        btn.style.color = '#fff';
+                    } else {
+                        btn.style.background = 'var(--bg-tertiary)';
+                        btn.style.color = 'var(--text-primary)';
+                    }
+                }
+            });
+            if (tab === 'dashboard') {
+                startServersPolling();
+            } else if (tab === 'tasks') {
+                fetchTasks();
+                populateTaskServiceOptions();
+            } else {
+                stopServersPolling();
+            }
+        }
 
         // Initialize WebSocket connection
         function initWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws`;
-            
+
             ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
@@ -877,7 +1134,7 @@
                 console.log('WebSocket disconnected');
                 document.getElementById('connection-status').textContent = 'Disconnected';
                 document.querySelector('.status-dot').style.background = 'var(--error)';
-                
+
                 if (!reconnectInterval) {
                     reconnectInterval = setInterval(() => {
                         console.log('Attempting to reconnect...');
@@ -929,14 +1186,14 @@
             const statusText = service.running ? 'Running' : 'Stopped';
             const uptime = service.runtime.uptime || 'N/A';
             const hasError = service.runtime.last_error ? ' has-error' : '';
-            
+
             const portBadges = service.ports.map(port => {
                 const portInfo = service.port_status.find(p => p.port === port);
                 const activeClass = portInfo && portInfo.accessible ? 'active' : 'inactive';
                 return `<span class="port-badge ${activeClass}">${port}</span>`;
             }).join('');
 
-            const errorHtml = service.runtime.last_error ? 
+            const errorHtml = service.runtime.last_error ?
                 `<div class="error-message">⚠️ ${service.runtime.last_error}</div>` : '';
 
             const pids = service.processes.map(p => p.pid).join(', ') || 'None';
@@ -1011,6 +1268,78 @@
             `;
         }
 
+        // ---------- Servers (multi-node) ----------
+        async function fetchServers() {
+            const data = await apiCall('/api/servers');
+            if (!data) return;
+            renderServers(data);
+            fetchMetricsSummary();
+        }
+
+        function renderServers(servers) {
+            const container = document.getElementById('servers-container');
+            const empty = document.getElementById('no-servers');
+            if (!servers.length) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            container.innerHTML = servers.map(s => createServerCard(s)).join('');
+        }
+
+        function createServerCard(srv) {
+            const lastSeen = srv.last_seen ? new Date(srv.last_seen) : null;
+            const ago = lastSeen ? ((Date.now() - lastSeen.getTime()) / 1000) : null;
+            const agoStr = ago === null ? 'N/A' : (ago < 60 ? `${Math.floor(ago)}s ago` : `${Math.floor(ago / 60)}m ago`);
+            const metrics = srv.last_metrics || {};
+            const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent + '%' : '—';
+            const mem = metrics.memory_percent !== undefined ? metrics.memory_percent + '%' : '—';
+            const disk = metrics.disk_percent !== undefined ? metrics.disk_percent + '%' : '—';
+            return `<div class="service-card" style="position:relative;">
+                <div class="service-header" style="margin-bottom:8px;">
+                    <div class="service-info">
+                        <h3>${srv.name}</h3>
+                        <p style="font-size:12px;color:var(--text-tertiary);">${srv.host} (${srv.ip})</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${(srv.tags || []).map(t => `<span class='port-badge'>${t}</span>`).join('')}</div>
+                    </div>
+                    <div class="service-status running" style="min-width:120px;">
+                        <div class="service-status-dot"></div>
+                        Online
+                    </div>
+                </div>
+                <div class="service-details" style="font-size:12px;">
+                    <div class="detail-row"><span class="detail-label">Last Seen</span><span class="detail-value">${agoStr}</span></div>
+                    <div class="detail-row"><span class="detail-label">CPU</span><span class="detail-value">${cpu}</span></div>
+                    <div class="detail-row"><span class="detail-label">Memory</span><span class="detail-value">${mem}</span></div>
+                    <div class="detail-row"><span class="detail-label">Disk</span><span class="detail-value">${disk}</span></div>
+                    <div class="detail-row"><span class="detail-label">Services</span><span class="detail-value">${(srv.services || []).length}</span></div>
+                </div>
+            </div>`;
+        }
+
+        function startServersPolling() {
+            if (serversPollInterval) return;
+            fetchServers();
+            serversPollInterval = setInterval(fetchServers, 10000);
+        }
+
+        function stopServersPolling() {
+            if (serversPollInterval) {
+                clearInterval(serversPollInterval);
+                serversPollInterval = null;
+            }
+        }
+
+        async function fetchMetricsSummary() {
+            const summary = await apiCall('/api/metrics/summary');
+            if (!summary) return;
+            const el = document.getElementById('metrics-summary');
+            if (el) {
+                el.innerHTML = `<strong>Servers:</strong> ${summary.servers_count} | <strong>CPU Avg:</strong> ${summary.cpu_avg ?? '—'} | <strong>Mem Avg:</strong> ${summary.memory_avg ?? '—'} | <strong>Disk Avg:</strong> ${summary.disk_avg ?? '—'} <span style='color:var(--text-tertiary);font-size:11px;'>Updated ${new Date(summary.last_updated).toLocaleTimeString()}</span>`;
+            }
+        }
+
         // API calls
         async function apiCall(url, method = 'GET', body = null) {
             try {
@@ -1032,13 +1361,13 @@
         async function refreshStatus() {
             const icon = document.getElementById('refresh-icon');
             icon.innerHTML = '<div class="loading"></div>';
-            
+
             const data = await apiCall('/api/status');
             if (data) {
                 updateServices(data);
                 showToast('success', 'Status refreshed');
             }
-            
+
             icon.textContent = '🔄';
         }
 
@@ -1116,7 +1445,7 @@
                 document.getElementById('setting-stats-retention').value = data.stats_retention_days || 30;
                 document.getElementById('setting-check-ports').checked = data.check_port_conflicts;
                 document.getElementById('setting-auto-restart').checked = data.auto_restart_on_failure;
-                
+
                 document.getElementById('settings-modal').classList.add('active');
             }
         }
@@ -1206,25 +1535,129 @@
             }
         }
 
+        // ---------------- Tasks (Scheduled) ----------------
+        let tasksCache = [];
+
+        async function fetchTasks() {
+            const data = await apiCall('/api/tasks');
+            if (!data) return;
+            tasksCache = data;
+            renderTasks(data);
+        }
+
+        function renderTasks(tasks) {
+            const container = document.getElementById('tasks-container');
+            if (!tasks.length) {
+                container.innerHTML = `<div style="padding:16px;border:1px dashed var(--border);border-radius:8px;color:var(--text-tertiary);">No tasks defined yet.</div>`;
+                return;
+            }
+            container.innerHTML = tasks.map(t => taskCardHtml(t)).join('');
+        }
+
+        function taskCardHtml(t) {
+            return `<div class="service-card" style="display:grid;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:16px;font-weight:600;">${t.name}</div>
+                    <div class="service-status ${t.enabled ? 'running' : 'stopped'}" style="padding:4px 10px;font-size:12px;">
+                        <div class="service-status-dot"></div>${t.enabled ? 'Enabled' : 'Disabled'}
+                    </div>
+                </div>
+                <div class="service-details" style="margin:0;">
+                    <div class="detail-row"><span class="detail-label">Cron</span><span class="detail-value">${t.cron_expression}</span></div>
+                    <div class="detail-row"><span class="detail-label">Action</span><span class="detail-value">${t.action}</span></div>
+                    <div class="detail-row"><span class="detail-label">Service</span><span class="detail-value">${t.service_name}</span></div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-secondary btn-sm" onclick="toggleTaskEnabled('${t.name}', ${!t.enabled})">${t.enabled ? 'Disable' : 'Enable'}</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.name}')">Delete</button>
+                </div>
+            </div>`;
+        }
+
+        function resetTaskForm() {
+            document.getElementById('task-name').value = '';
+            document.getElementById('task-cron').value = '';
+            document.getElementById('task-action').value = 'start';
+            document.getElementById('task-service').selectedIndex = 0;
+            document.getElementById('task-enabled').checked = true;
+        }
+
+        async function populateTaskServiceOptions() {
+            const select = document.getElementById('task-service');
+            if (!select) return;
+            const services = await apiCall('/api/services');
+            if (!services) return;
+            select.innerHTML = services.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+        }
+
+        async function createTask() {
+            const name = document.getElementById('task-name').value.trim();
+            const cron = document.getElementById('task-cron').value.trim();
+            const action = document.getElementById('task-action').value;
+            const serviceName = document.getElementById('task-service').value;
+            const enabled = document.getElementById('task-enabled').checked;
+
+            if (!name || !cron || !action || !serviceName) {
+                showToast('error', 'Please fill all task fields');
+                return;
+            }
+
+            const body = { name, cron_expression: cron, action, service_name: serviceName, enabled };
+            const res = await apiCall('/api/tasks', 'POST', body);
+            if (res && res.success) {
+                showToast('success', 'Task created');
+                resetTaskForm();
+                fetchTasks();
+            } else if (res && res.detail) {
+                showToast('error', res.detail);
+            }
+        }
+
+        async function deleteTask(name) {
+            if (!confirm(`Delete task '${name}'?`)) return;
+            const res = await apiCall(`/api/tasks/${encodeURIComponent(name)}`, 'DELETE');
+            if (res && res.success) {
+                showToast('success', 'Task deleted');
+                fetchTasks();
+            }
+        }
+
+        async function toggleTaskEnabled(name, newEnabled) {
+            const task = tasksCache.find(t => t.name === name);
+            if (!task) return;
+            const updated = { ...task, enabled: newEnabled };
+            const res = await apiCall(`/api/tasks/${encodeURIComponent(name)}`, 'PUT', {
+                name: updated.name,
+                cron_expression: updated.cron_expression,
+                action: updated.action,
+                service_name: updated.service_name,
+                enabled: updated.enabled
+            });
+            if (res && res.success) {
+                showToast('success', `Task ${newEnabled ? 'enabled' : 'disabled'}`);
+                fetchTasks();
+            }
+        }
+
         // Toast notifications
         function showToast(type, message) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            
+
             const icons = {
                 success: '✅',
                 error: '❌',
                 warning: '⚠️'
             };
-            
+
             toast.innerHTML = `
                 <div class="toast-icon">${icons[type] || 'ℹ️'}</div>
                 <div class="toast-message">${message}</div>
             `;
-            
+
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.animation = 'slideIn 0.3s ease reverse';
                 setTimeout(() => toast.remove(), 300);
@@ -1235,6 +1668,7 @@
         window.addEventListener('load', () => {
             initWebSocket();
             refreshStatus();
+            switchTab('dashboard');
         });
 
         // Close modals on outside click
@@ -1245,4 +1679,5 @@
         });
     </script>
 </body>
+
 </html>

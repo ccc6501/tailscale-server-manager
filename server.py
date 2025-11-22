@@ -13,6 +13,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import uuid
 
 import psutil
 import uvicorn
@@ -90,6 +91,44 @@ class ScheduledTaskModel(BaseModel):
     service_name: str
     enabled: bool = True
 
+# ------------------------------------------------------------
+# Multi-Server Enrollment Models
+# ------------------------------------------------------------
+
+@dataclass
+class ServerNode:
+    """Represents a remotely enrolled server/agent."""
+    id: str
+    name: str
+    host: str
+    ip: str
+    tags: List[str] = field(default_factory=list)
+    services: List[str] = field(default_factory=list)  # names referencing SERVICES or external
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    last_seen: Optional[str] = None  # ISO timestamp of last heartbeat
+    last_metrics: Dict[str, Any] = field(default_factory=dict)  # latest metrics snapshot
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+class ServerRegisterModel(BaseModel):
+    name: str
+    host: str
+    ip: str
+    tags: List[str] = []
+    services: List[str] = []
+    metadata: Dict[str, Any] = {}
+
+
+class ServerHeartbeatModel(BaseModel):
+    metrics: Dict[str, Any]
+
+
+class ServerCommandModel(BaseModel):
+    action: str  # future: start_service, stop_service, ping, custom
+    service_name: Optional[str] = None
+
 
 # ------------------------------------------------------------
 # Runtime Tracking
@@ -146,6 +185,9 @@ class ServiceRuntime:
 
 # Global runtime tracker
 runtime_tracker: Dict[str, ServiceRuntime] = {}
+ENROLLED_SERVERS: Dict[str, ServerNode] = {}
+SERVER_HISTORY: Dict[str, List[Dict[str, Any]]] = {}  # bounded metrics history per server
+SERVER_HISTORY_MAX = 200
 
 # ------------------------------------------------------------
 # Configuration Loading & Management
@@ -221,8 +263,35 @@ def save_settings(settings: ServerSettings):
     settings_file.write_text(json.dumps(settings.to_dict(), indent=2), encoding=DEFAULT_ENCODING)
 
 
+def load_servers() -> Dict[str, ServerNode]:
+    """Load enrolled servers from servers.json (static fields)."""
+    servers_file = Path("servers.json")
+    if not servers_file.exists():
+        servers_file.write_text(json.dumps([], indent=2), encoding=DEFAULT_ENCODING)
+        return {}
+    try:
+        data = json.loads(servers_file.read_text(encoding=DEFAULT_ENCODING))
+        loaded: Dict[str, ServerNode] = {}
+        for entry in data:
+            try:
+                loaded[entry["id"]] = ServerNode(**entry)
+            except Exception:
+                continue
+        return loaded
+    except Exception:
+        return {}
+
+
+def save_servers():
+    """Persist current enrolled servers (excluding history)."""
+    servers_file = Path("servers.json")
+    payload = [srv.to_dict() for srv in ENROLLED_SERVERS.values()]
+    servers_file.write_text(json.dumps(payload, indent=2), encoding=DEFAULT_ENCODING)
+
+
 SERVICES = load_services()
 SETTINGS = load_settings()
+ENROLLED_SERVERS = load_servers()
 
 # ------------------------------------------------------------
 # Port Management & Validation
@@ -468,6 +537,37 @@ def get_system_stats() -> Dict[str, Any]:
     except:
         return {}
 
+
+def aggregate_server_metrics() -> Dict[str, Any]:
+    """Aggregate latest metrics from all enrolled servers (top-level; fixed indentation)."""
+    agg = {
+        "servers_count": len(ENROLLED_SERVERS),
+        "cpu_avg": None,
+        "memory_avg": None,
+        "disk_avg": None,
+        "last_updated": datetime.utcnow().isoformat(),
+    }
+    cpu_vals: List[float] = []
+    mem_vals: List[float] = []
+    disk_vals: List[float] = []
+    for srv in ENROLLED_SERVERS.values():
+        metrics = srv.last_metrics
+        if not metrics:
+            continue
+        if "cpu_percent" in metrics:
+            cpu_vals.append(metrics["cpu_percent"])
+        if "memory_percent" in metrics:
+            mem_vals.append(metrics["memory_percent"])
+        if "disk_percent" in metrics:
+            disk_vals.append(metrics["disk_percent"])
+    if cpu_vals:
+        agg["cpu_avg"] = round(sum(cpu_vals) / len(cpu_vals), 2)
+    if mem_vals:
+        agg["memory_avg"] = round(sum(mem_vals) / len(mem_vals), 2)
+    if disk_vals:
+        agg["disk_avg"] = round(sum(disk_vals) / len(disk_vals), 2)
+    return agg
+
 # ------------------------------------------------------------
 # FastAPI Application
 # ------------------------------------------------------------
@@ -596,6 +696,137 @@ async def update_settings(settings_update: SettingsUpdate):
 async def get_stats():
     """Get system statistics"""
     return get_system_stats()
+
+
+# ------------------------------------------------------------
+# Multi-Server Enrollment Endpoints
+# ------------------------------------------------------------
+
+@app.post("/api/servers/register")
+async def register_server(server: ServerRegisterModel):
+    """Enroll a remote server. Returns server id."""
+    # Generate stable id (uuid4)
+    srv_id = str(uuid.uuid4())
+    node = ServerNode(
+        id=srv_id,
+        name=server.name,
+        host=server.host,
+        ip=server.ip,
+        tags=server.tags,
+        services=server.services,
+        metadata=server.metadata,
+        last_seen=datetime.utcnow().isoformat(),
+        last_metrics={},
+    )
+    ENROLLED_SERVERS[srv_id] = node
+    save_servers()
+    return {"success": True, "server_id": srv_id, "message": "Server enrolled"}
+
+
+@app.post("/api/servers/{server_id}/heartbeat")
+async def server_heartbeat(server_id: str, heartbeat: ServerHeartbeatModel):
+    """Receive heartbeat & metrics from enrolled server."""
+    node = ENROLLED_SERVERS.get(server_id)
+    if not node:
+        raise HTTPException(status_code=404, detail="Server not found")
+    node.last_seen = datetime.utcnow().isoformat()
+    node.last_metrics = heartbeat.metrics
+    # Append to history
+    history = SERVER_HISTORY.setdefault(server_id, [])
+    history.append({"ts": node.last_seen, **heartbeat.metrics})
+    if len(history) > SERVER_HISTORY_MAX:
+        SERVER_HISTORY[server_id] = history[-SERVER_HISTORY_MAX:]
+    return {"success": True, "message": "Heartbeat recorded"}
+
+
+@app.get("/api/servers")
+async def list_servers():
+    """List enrolled servers."""
+    return [srv.to_dict() for srv in ENROLLED_SERVERS.values()]
+
+
+@app.get("/api/servers/{server_id}")
+async def get_server(server_id: str):
+    node = ENROLLED_SERVERS.get(server_id)
+    if not node:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return node.to_dict()
+
+
+@app.get("/api/metrics/summary")
+async def metrics_summary():
+    return aggregate_server_metrics()
+
+
+@app.get("/api/metrics/{server_id}")
+async def metrics_for_server(server_id: str):
+    if server_id not in ENROLLED_SERVERS:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return {
+        "server_id": server_id,
+        "history": SERVER_HISTORY.get(server_id, [])
+    }
+
+
+@app.post("/api/servers/{server_id}/command")
+async def server_command(server_id: str, cmd: ServerCommandModel):
+    """Stub endpoint for future remote execution. Currently returns not-implemented."""
+    if server_id not in ENROLLED_SERVERS:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return {
+        "success": False,
+        "implemented": False,
+        "message": "Remote command dispatch not yet implemented",
+        "requested_action": cmd.action,
+        "service_name": cmd.service_name,
+    }
+
+# ------------------------------------------------------------
+# Scheduled Tasks CRUD Endpoints (Basic persistence only)
+# ------------------------------------------------------------
+
+def _find_task_index(name: str) -> int:
+    for i, t in enumerate(SETTINGS.scheduled_tasks):
+        if t.get("name") == name:
+            return i
+    return -1
+
+
+@app.get("/api/tasks")
+async def list_tasks():
+    return SETTINGS.scheduled_tasks
+
+
+@app.post("/api/tasks")
+async def create_task(task: ScheduledTaskModel):
+    if _find_task_index(task.name) != -1:
+        raise HTTPException(status_code=400, detail="Task name already exists")
+    # Minimal validation of cron expression (very naive)
+    if len(task.cron_expression.split()) < 5:
+        raise HTTPException(status_code=400, detail="Invalid cron expression format")
+    SETTINGS.scheduled_tasks.append(task.dict())
+    save_settings(SETTINGS)
+    return {"success": True, "message": "Task created"}
+
+
+@app.put("/api/tasks/{task_name}")
+async def update_task(task_name: str, task: ScheduledTaskModel):
+    idx = _find_task_index(task_name)
+    if idx == -1:
+        raise HTTPException(status_code=404, detail="Task not found")
+    SETTINGS.scheduled_tasks[idx] = task.dict()
+    save_settings(SETTINGS)
+    return {"success": True, "message": "Task updated"}
+
+
+@app.delete("/api/tasks/{task_name}")
+async def delete_task(task_name: str):
+    idx = _find_task_index(task_name)
+    if idx == -1:
+        raise HTTPException(status_code=404, detail="Task not found")
+    SETTINGS.scheduled_tasks.pop(idx)
+    save_settings(SETTINGS)
+    return {"success": True, "message": "Task deleted"}
 
 
 @app.get("/api/port-conflicts")
