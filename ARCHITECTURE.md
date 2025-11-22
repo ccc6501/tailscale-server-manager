@@ -57,6 +57,7 @@ Planned Executor (future): minute loop parses enabled tasks, matches current tim
 ```
 
 ### 3. Status Monitoring
+
 ```
 Server → psutil → Process List → Match Keywords → Service Status
    ↓
@@ -84,18 +85,21 @@ tailscale_web_manager/
 ## Technology Stack
 
 ### Backend
+
 - **FastAPI**: Modern Python web framework
 - **uvicorn**: ASGI server
 - **psutil**: Process management
 - **WebSockets**: Real-time communication
 
 ### Frontend
+
 - **Vanilla JavaScript**: No frameworks needed
 - **CSS3**: Modern styling with gradients
 - **WebSocket API**: Real-time updates
 - **Fetch API**: REST calls
 
 ### Design
+
 - **Dark theme**: ChatOps Neon inspired
 - **Responsive**: Works on all devices
 - **Animations**: Smooth transitions
@@ -129,18 +133,21 @@ tailscale_web_manager/
 ## Deployment Options
 
 ### Option 1: Development
+
 ```bash
 python server.py
 # Access: http://localhost:8765
 ```
 
 ### Option 2: Tailscale Access
+
 ```bash
 python server.py
 # Access: http://[tailscale-ip]:8765
 ```
 
 ### Option 3: System Service
+
 ```bash
 # Linux systemd or Windows NSSM
 # Starts automatically on boot
@@ -148,6 +155,7 @@ python server.py
 ```
 
 ### Option 4: HTTPS via Tailscale
+
 ```bash
 tailscale serve https / http://localhost:8765
 # Access: https://[machine-name].[tailnet].ts.net
@@ -165,14 +173,15 @@ tailscale serve https / http://localhost:8765
 ## Scalability Notes
 
 ### Current Design
+
 - Single server instance
 - Manages processes on same machine
 - Good for: 10-50 services
 
 ### Future Expansion Ideas
 
- 
 ### Future Expansion Ideas
+
 - Service health checks
 - Resource monitoring graphs
 - Log aggregation
@@ -233,4 +242,5 @@ Planned Executor (future): minute loop parses enabled tasks, matching current ti
 \n+## Aggregation Function Fix
 \n+`aggregate_server_metrics()` moved to top-level (was accidentally indented inside `get_system_stats()`) preventing runtime NameError during `/api/metrics/summary` calls.
 \n+## Next Enhancements
+
 1. WebSocket broadcast on task changes.\n2. Auth tokens for server enrollment + task mutations.\n3. Historical charts (CPU / Memory / Disk trends).\n4. Remote command execution (start/stop services on other nodes).\n5. Service dependency graph & orchestrated rolling restarts.\n6. Structured logging + log tail endpoint.
